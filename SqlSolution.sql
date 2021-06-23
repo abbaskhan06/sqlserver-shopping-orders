@@ -548,3 +548,72 @@ GO
 ALTER TABLE Product
 ADD FOREIGN KEY (PackageId) REFERENCES Package(Id)
 GO
+
+
+/*==============================================================*/
+/* TASK 3. SELECT           					                */
+/*==============================================================*/
+
+/*==============================================================*/
+/* TASK 3.1 Total sales for 2013 for each Country               */
+/*==============================================================*/
+SELECT Country.CountryName, SUM("Order".TotalAmount) AS TotalSales
+FROM "Order", CustomerCard, Customer, City, Country
+WHERE "Order".CardNo = CustomerCard.CardNo
+AND CustomerCard.CustomerId = Customer.Id
+AND Customer.City_Id = City.Id
+AND City.Country_Id = Country.Id
+AND YEAR("Order".OrderDate) = 2013
+GROUP BY Country.CountryName
+GO
+
+-- Verify per Country
+SELECT *
+FROM "Order", CustomerCard, Customer, City, Country
+WHERE "Order".CardNo = CustomerCard.CardNo
+AND CustomerCard.CustomerId = Customer.Id
+AND Customer.City_Id = City.Id
+AND City.Country_Id = Country.Id
+AND YEAR("Order".OrderDate) = 2013
+AND Country.CountryName = 'Argentina'
+GO
+
+-- Verify per Card
+SELECT * FROM "Order"
+WHERE "Order".CardNo = 2067471061
+ORDER BY "Order".CardNo
+GO
+
+/*=========================================================================*/
+/* TASK 3.2 The single top selling product for each supplier for each year */
+/*=========================================================================*/
+SELECT * FROM
+(
+SELECT
+ROW_NUMBER() OVER (PARTITION BY YEAR("Order".OrderDate)
+ORDER BY SUM(OrderItem.UnitPrice * OrderItem.Quantity) DESC) AS RankNo,
+YEAR("Order".OrderDate) AS OrderYear,
+OrderItem.ProductId AS ProductId,
+Product.ProductName,
+SUM(OrderItem.UnitPrice * OrderItem.Quantity) as ProductSalesAmount
+FROM OrderItem
+INNER JOIN
+"Order"
+ON "Order".Id = OrderItem.OrderId
+INNER JOIN
+Product
+ON Product.Id = OrderItem.ProductId
+GROUP BY
+YEAR("Order".OrderDate),
+OrderItem.ProductId,
+Product.ProductName
+) AS YearProductSales
+WHERE RankNo = 1
+GO
+
+
+/*=======================================================================================*/
+/* TASK 3.3 Create a table with columns for CustomerId and Average Weekly Spend Quartile */
+/*=======================================================================================*/
+
+
