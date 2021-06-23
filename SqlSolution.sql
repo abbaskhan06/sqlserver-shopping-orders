@@ -1,3 +1,6 @@
+
+/* VERSION: Microsoft SQL Server 2017 */  
+
 /*==============================================================*/
 /* CREATING DATABASE                                            */
 /*==============================================================*/
@@ -46,13 +49,13 @@ BULK INSERT Customer
 FROM 'D:\RemoteSQLPracticalTest\Data\Customer.CSV'
 WITH 
 (
--- FORMAT = 'CSV',
-FIRSTROW = 2,
-FIELDTERMINATOR = ';',
-ROWTERMINATOR='\n'
+	FORMAT = 'CSV',
+	FIRSTROW = 2,
+	FIELDTERMINATOR = ';',
+	ROWTERMINATOR='\n',
+	CODEPAGE = '1252' -- This is done for importing European / Special Characters properly into the table
 )
 GO
-
 
 /*==============================================================*/
 /* Table: CustomerCard                                              */
@@ -68,13 +71,12 @@ BULK INSERT CustomerCard
 FROM 'D:\RemoteSQLPracticalTest\Data\CustomerCard.CSV'
 WITH 
 (
--- FORMAT = 'CSV',
-FIRSTROW = 2,
-FIELDTERMINATOR = ';', 
-ROWTERMINATOR='\n'
+	FORMAT = 'CSV',
+	FIRSTROW = 2,
+	FIELDTERMINATOR = ';', 
+	ROWTERMINATOR='\n'
 )
 GO
-
 
 /*==============================================================*/
 /* Table: "Order"                                               */
@@ -93,13 +95,12 @@ BULK INSERT "Order"
 FROM 'D:\RemoteSQLPracticalTest\Data\Order.CSV'
 WITH 
 (
--- FORMAT = 'CSV',
-FIRSTROW = 2,
-FIELDTERMINATOR = ';', 
-ROWTERMINATOR='\n'
+	FORMAT = 'CSV',
+	FIRSTROW = 2,
+	FIELDTERMINATOR = ';', 
+	ROWTERMINATOR='\n'
 )
 GO
-
 
 /*==============================================================*/
 /* Table: OrderItem                                             */
@@ -118,13 +119,12 @@ BULK INSERT OrderItem
 FROM 'D:\RemoteSQLPracticalTest\Data\OrderItem.CSV'
 WITH 
 (
--- FORMAT = 'CSV',
-FIRSTROW = 2,
-FIELDTERMINATOR = ';',
-ROWTERMINATOR='\n' 
+	FORMAT = 'CSV',
+	FIRSTROW = 2,
+	FIELDTERMINATOR = ';',
+	ROWTERMINATOR='\n' 
 )
 GO
-
 
 /*==============================================================*/
 /* Table: Product                                               */
@@ -136,10 +136,11 @@ CREATE TABLE Product
    SupplierId           int                  not null,
    UnitPrice            decimal(12,2)        null default 0,
    [Package]            nvarchar(30)         null,
-   --- Uploading True/False as bit is giving error
-   --- Threfore upload the CSV using nvarchar and then Alter Table back to bit  
+   -- The IsDiscontinued column (True/False) is to be set as type bit
+   -- However bulk inserting the CSV is giving an error for this type
+   -- Threfore, uploading the CSV using type nvarchar 
+   -- Followed by altering the type back to bit  
    IsDiscontinued		nvarchar(10)	     not null --default 0,
-   	
 )
 GO
 
@@ -147,11 +148,11 @@ BULK INSERT Product
 FROM 'D:\RemoteSQLPracticalTest\Data\Product.CSV'
 WITH 
 (
--- FORMAT = 'CSV',
-FIRSTROW = 2,
-FIELDTERMINATOR = ';', 
-ROWTERMINATOR='\n',
-CODEPAGE = '1252'
+	FORMAT = 'CSV',
+	FIRSTROW = 2,
+	FIELDTERMINATOR = ';', 
+	ROWTERMINATOR='\n',
+	CODEPAGE = '1252'
 )
 GO
 --- Altering the Data Type of IsDiscontinued Coloum to bit from nvarchar
@@ -161,9 +162,20 @@ GO
 
 
 /*==============================================================*/
-/* TASK 2. NORMALISING SCHEMA					                */
+/* TABLES LOADED									            */
 /*==============================================================*/
 
+
+/*==============================================================*/
+/*==============================================================*/
+/*==============================================================*/
+
+
+
+
+/*==============================================================*/
+/* TASK 2. NORMALISING TABLES SCHEMA				            */
+/*==============================================================*/
 
 /*==============================================================*/
 /* Creating Country	Table					                        */
@@ -275,9 +287,8 @@ ALTER TABLE Customer
 ADD FOREIGN KEY (City_Id) REFERENCES City(Id)
 GO
 
-
 /*==============================================================*/
-/* Assigning Keys and elationships to CustomerCard Table	    */
+/* Assigning Keys and Relationships to CustomerCard Table	    */
 /*==============================================================*/
 
 --- Assigning Primary Key Contraint to CardNo   
@@ -317,7 +328,12 @@ GO
 /* Assigning Keys and elationships to OrderItem Table	        */
 /*==============================================================*/
 
---- Deleting Transactions in OrderItems Not There in Orders Table
+--ASSUMPTION: 
+-- I am DELETING Transactions in OrderItems which are NOT There in Orders Table
+-- Example: OrderId = 1 is not in the "Order" (Parent) table but is in the OrderItem (Child) table
+-- In the above situation, a foreign key constrainst could not be established.
+-- In real life scenario, this is reported and rectified rather than deleting the transactions 
+
 DROP TABLE IF EXISTS Temp_OrderItem
 GO
 SELECT * INTO Temp_OrderItem
@@ -349,8 +365,6 @@ GO
 ALTER TABLE OrderItem
 ADD FOREIGN KEY (OrderId) REFERENCES "Order"(Id)
 GO
-
---- NOTE WE STILL HAVE TO ASSIGN FOREIGN KEY PRODUCT ID WITH PRODUCT TABLE
 
 /*==============================================================*/
 /* Table: Supplier						                        */
@@ -550,8 +564,17 @@ ADD FOREIGN KEY (PackageId) REFERENCES Package(Id)
 GO
 
 
+
 /*==============================================================*/
-/* TASK 3. SELECT           					                */
+/*==============================================================*/
+/*==============================================================*/
+
+
+
+
+
+/*==============================================================*/
+/* TASK 3. ANALYSIS           					                */
 /*==============================================================*/
 
 /*==============================================================*/
@@ -571,29 +594,6 @@ AND YEAR("Order".OrderDate) = 2013
 GROUP BY Country.CountryName
 GO
 
--- Verify per Country
-SELECT
-*
-FROM
-"Order", CustomerCard, Customer, City, Country
-WHERE
-"Order".CardNo = CustomerCard.CardNo
-AND CustomerCard.CustomerId = Customer.Id
-AND Customer.City_Id = City.Id
-AND City.Country_Id = Country.Id
-AND YEAR("Order".OrderDate) = 2013
-AND Country.CountryName = 'Argentina'
-GO
-
--- Verify per Card
-SELECT
-*
-FROM
-"Order"
-WHERE
-"Order".CardNo = 2067471061
-ORDER BY "Order".CardNo
-GO
 
 /*=========================================================================*/
 /* TASK 3.2 The single top selling product for each supplier for each year */
@@ -674,45 +674,63 @@ WHERE
 RankNo = 1
 GO
 
--- Verify per Product per Supplier
-SELECT
-*,
-SUM(OrderItem.UnitPrice * OrderItem.Quantity) OVER (PARTITION BY YEAR("Order".OrderDate)) AS ProductSalesAmount
-FROM
-"Order", OrderItem, Product, SupplierProductCost, Supplier
-WHERE
-"Order".Id = OrderItem.OrderId
-AND Product.Id = OrderItem.ProductId
-AND SupplierProductCost.Id = Product.SupplierCostId
-AND Supplier.Id = SupplierProductCost.SupplierId
-AND SupplierId = 18
-AND Product.ProductName = 'Côte de Blaye'
 
 /*=======================================================================================*/
 /* TASK 3.3 Create a table with columns for CustomerId and Average Weekly Spend Quartile */
 /*=======================================================================================*/
 
-SELECT Customer.Id AS CustomerId
+	-- Creating Weekly Average Quartile Values and Transposing Table  
+SELECT *
+FROM
+(
+SELECT CustomerId, Customer_Name, 
+CASE 
+	WHEN Quartile = 1 THEN 'Quartile 1'
+	WHEN Quartile = 2 THEN 'Quartile 2'
+	WHEN Quartile = 3 THEN 'Quartile 3'
+	ELSE 'Quartile 4'
+	END AS Quartile_Value,
+ CAST(AVG(Quartiles.AvgSalesAmountForWeek) AS numeric(10,1)) AS AverageWeeklySales 
+FROM
+(
+	-- Assigning Quartile VaLues to Avg. Spends for the Selected Week 
+	SELECT Customer.Id AS CustomerId 
+	,CONCAT (Customer.FirstName,' ',Customer.LastName) AS Customer_Name
 	,OrderWithYearWeek.OrderDateYearWeek
-	,CONVERT(FLOAT, AVG(OrderWithYearWeek.TotalAmount), 1) AS AvgSalesAmountForWeek
+	,CAST(AVG(OrderWithYearWeek.TotalAmount)AS FLOAT) AS AvgSalesAmountForWeek
 	,NTILE(4) OVER(PARTITION BY
 		Customer.Id
 		ORDER BY AVG(OrderWithYearWeek.TotalAmount) ASC
 	) AS Quartile
 FROM 
 (
+	-- Adding Column with Year + Week to the "Order" Table to Distinguish the Weekls
 	SELECT *
 		,DATEPART(YEAR, "Order".OrderDate) * 100 + DATEPART(WEEK, "Order".OrderDate) AS OrderDateYearWeek
 	FROM "Order"
 ) AS OrderWithYearWeek
+
 INNER JOIN CustomerCard
 	ON OrderWithYearWeek.CardNo = CustomerCard.CardNo
 INNER JOIN Customer
     ON CustomerCard.CustomerId = Customer.Id
 GROUP BY
 	Customer.Id,
+	Customer.FirstName,
+	Customer.LastName,
 	OrderWithYearWeek.OrderDateYearWeek
-ORDER BY
-	Customer.Id
+) Quartiles
+GROUP BY 
+CustomerId,
+Customer_Name,
+(CASE 
+	WHEN Quartile = 1 THEN 'Quartile 1'
+	WHEN Quartile = 2 THEN 'Quartile 2'
+	WHEN Quartile = 3 THEN 'Quartile 3'
+	ELSE 'Quartile 4'
+	END)
+)
+AS SourceFile
+PIVOT (MAX(AverageWeeklySales) FOR Quartile_Value IN ([Quartile 1],[Quartile 2],[Quartile 3],[Quartile 4])) AS pivottable
+ORDER BY CustomerId
 GO
-
