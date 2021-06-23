@@ -1,0 +1,79 @@
+Id;ProductName;SupplierId;UnitPrice;Package;IsDiscontinued
+1;Chai;1;18;10 boxes x 20 bags;False
+2;Chang;1;19;24 - 12 oz bottles;False
+3;Aniseed Syrup;1;10;12 - 550 ml bottles;False
+4;Chef Anton's Cajun Seasoning;2;22;48 - 6 oz jars;False
+5;Chef Anton's Gumbo Mix;2;21.35;36 boxes;True
+6;Grandma's Boysenberry Spread;3;25;12 - 8 oz jars;False
+7;Uncle Bob's Organic Dried Pears;3;30;12 - 1 lb pkgs.;False
+8;Northwoods Cranberry Sauce;3;40;12 - 12 oz jars;False
+9;Mishi Kobe Niku;4;97;18 - 500 g pkgs.;True
+10;Ikura;4;31;12 - 200 ml jars;False
+11;Queso Cabrales;5;21;1 kg pkg.;False
+12;Queso Manchego La Pastora;5;38;10 - 500 g pkgs.;False
+13;Konbu;6;6;2 kg box;False
+14;Tofu;6;23.25;40 - 100 g pkgs.;False
+15;Genen Shouyu;6;15.5;24 - 250 ml bottles;False
+16;Pavlova;7;17.45;32 - 500 g boxes;False
+17;Alice Mutton;7;39;20 - 1 kg tins;True
+18;Carnarvon Tigers;7;62.5;16 kg pkg.;False
+19;Teatime Chocolate Biscuits;8;9.2;10 boxes x 12 pieces;False
+20;Sir Rodney's Marmalade;8;81;30 gift boxes;False
+21;Sir Rodney's Scones;8;10;24 pkgs. x 4 pieces;False
+22;Gustaf's Knäckebröd;9;21;24 - 500 g pkgs.;False
+23;Tunnbröd;9;9;12 - 250 g pkgs.;False
+24;Guaraná Fantástica;10;4.5;12 - 355 ml cans;True
+25;NuNuCa Nuß-Nougat-Creme;11;14;20 - 450 g glasses;False
+26;Gumbär Gummibärchen;11;31.23;100 - 250 g bags;False
+27;Schoggi Schokolade;11;43.9;100 - 100 g pieces;False
+28;Rössle Sauerkraut;12;45.6;25 - 825 g cans;True
+29;Thüringer Rostbratwurst;12;123.79;50 bags x 30 sausgs.;True
+30;Nord-Ost Matjeshering;13;25.89;10 - 200 g glasses;False
+31;Gorgonzola Telino;14;12.5;12 - 100 g pkgs;False
+32;Mascarpone Fabioli;14;32;24 - 200 g pkgs.;False
+33;Geitost;15;2.5;500 g;False
+34;Sasquatch Ale;16;14;24 - 12 oz bottles;False
+35;Steeleye Stout;16;18;24 - 12 oz bottles;False
+36;Inlagd Sill;17;19;24 - 250 g  jars;False
+37;Gravad lax;17;26;12 - 500 g pkgs.;False
+38;Côte de Blaye;18;263.5;12 - 75 cl bottles;False
+39;Chartreuse verte;18;18;750 cc per bottle;False
+40;Boston Crab Meat;19;18.4;24 - 4 oz tins;False
+41;Jack's New England Clam Chowder;19;9.65;12 - 12 oz cans;False
+42;Singaporean Hokkien Fried Mee;20;14;32 - 1 kg pkgs.;True
+43;Ipoh Coffee;20;46;16 - 500 g tins;False
+44;Gula Malacca;20;19.45;20 - 2 kg bags;False
+45;Rogede sild;21;9.5;1k pkg.;False
+46;Spegesild;21;12;4 - 450 g glasses;False
+47;Zaanse koeken;22;9.5;10 - 4 oz boxes;False
+48;Chocolade;22;12.75;10 pkgs.;False
+49;Maxilaku;23;20;24 - 50 g pkgs.;False
+50;Valkoinen suklaa;23;16.25;12 - 100 g bars;False
+51;Manjimup Dried Apples;24;53;50 - 300 g pkgs.;False
+52;Filo Mix;24;7;16 - 2 kg boxes;False
+53;Perth Pasties;24;32.8;48 pieces;True
+54;Tourtière;25;7.45;16 pies;False
+55;Pâté chinois;25;24;24 boxes x 2 pies;False
+56;Gnocchi di nonna Alice;26;38;24 - 250 g pkgs.;False
+57;Ravioli Angelo;26;19.5;24 - 250 g pkgs.;False
+58;Escargots de Bourgogne;27;13.25;24 pieces;False
+59;Raclette Courdavault;28;55;5 kg pkg.;False
+60;Camembert Pierrot;28;34;15 - 300 g rounds;False
+61;Sirop d'érable;29;28.5;24 - 500 ml bottles;False
+62;Tarte au sucre;29;49.3;48 pies;False
+63;Vegie-spread;7;43.9;15 - 625 g jars;False
+64;Wimmers gute Semmelknödel;12;33.25;20 bags x 4 pieces;False
+65;Louisiana Fiery Hot Pepper Sauce;2;21.05;32 - 8 oz bottles;False
+66;Louisiana Hot Spiced Okra;2;17;24 - 8 oz jars;False
+67;Laughing Lumberjack Lager;16;14;24 - 12 oz bottles;False
+68;Scottish Longbreads;8;12.5;10 boxes x 8 pieces;False
+69;Gudbrandsdalsost;15;36;10 kg pkg.;False
+70;Outback Lager;7;15;24 - 355 ml bottles;False
+71;Flotemysost;15;21.5;10 - 500 g pkgs.;False
+72;Mozzarella di Giovanni;14;34.8;24 - 200 g pkgs.;False
+73;Röd Kaviar;17;15;24 - 150 g jars;False
+74;Longlife Tofu;4;10;5 kg pkg.;False
+75;Rhönbräu Klosterbier;12;7.75;24 - 0.5 l bottles;False
+76;Lakkalikööri;23;18;500 ml;False
+77;Original Frankfurter grüne Soße;12;13;12 boxes;False
+78;Stroopwafels;22;9.75;24 pieces;False
