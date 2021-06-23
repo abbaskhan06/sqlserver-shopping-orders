@@ -1,14 +1,31 @@
 /*==============================================================*/
-/* CREATING DATABASE                                               */
+/* CREATING DATABASE                                            */
 /*==============================================================*/
-
+--DROP DATABASE IF EXISTS [Digitas_RemoteSQL_Practical_Test]  
+--GO 
 --CREATE DATABASE [Digitas_RemoteSQL_Practical_Test]
 --GO
 USE Digitas_RemoteSQL_Practical_Test
 GO
 
 /*==============================================================*/
-/* CREATING AND LOADING TABLES FROM CSVs                                               */
+/* TASK 0. DROPPING PRE-CREATED TABLES                          */
+/*==============================================================*/
+
+DROP TABLE IF EXISTS OrderItem 
+DROP TABLE IF EXISTS "Order" 
+DROP TABLE IF EXISTS Product 
+DROP TABLE IF EXISTS CustomerCard 
+DROP TABLE IF EXISTS Customer 
+DROP TABLE IF EXISTS IsDiscontinued 
+DROP TABLE IF EXISTS Package
+DROP TABLE IF EXISTS SupplierProductCost
+DROP TABLE IF EXISTS Supplier
+DROP TABLE IF EXISTS City
+DROP TABLE IF EXISTS Country
+
+/*==============================================================*/
+/* TASK 1. CREATING AND LOADING TABLES FROM CSVs                */
 /*==============================================================*/
 
 /*==============================================================*/
@@ -29,16 +46,17 @@ BULK INSERT Customer
 FROM 'D:\RemoteSQLPracticalTest\Data\Customer.CSV'
 WITH 
 (
-FORMAT = 'CSV',
+-- FORMAT = 'CSV',
 FIRSTROW = 2,
-FIELDTERMINATOR = ';'
+FIELDTERMINATOR = ';',
+ROWTERMINATOR='\n'
 )
 GO
+
 
 /*==============================================================*/
 /* Table: CustomerCard                                              */
 /*==============================================================*/
-
 CREATE TABLE CustomerCard 
 (
    CustomerId           int                  not null,
@@ -46,14 +64,14 @@ CREATE TABLE CustomerCard
 )
 GO
 
-
 BULK INSERT CustomerCard
 FROM 'D:\RemoteSQLPracticalTest\Data\CustomerCard.CSV'
 WITH 
 (
-FORMAT = 'CSV',
+-- FORMAT = 'CSV',
 FIRSTROW = 2,
-FIELDTERMINATOR = ';' 
+FIELDTERMINATOR = ';', 
+ROWTERMINATOR='\n'
 )
 GO
 
@@ -75,9 +93,10 @@ BULK INSERT "Order"
 FROM 'D:\RemoteSQLPracticalTest\Data\Order.CSV'
 WITH 
 (
-FORMAT = 'CSV',
+-- FORMAT = 'CSV',
 FIRSTROW = 2,
-FIELDTERMINATOR = ';' 
+FIELDTERMINATOR = ';', 
+ROWTERMINATOR='\n'
 )
 GO
 
@@ -99,9 +118,10 @@ BULK INSERT OrderItem
 FROM 'D:\RemoteSQLPracticalTest\Data\OrderItem.CSV'
 WITH 
 (
-FORMAT = 'CSV',
+-- FORMAT = 'CSV',
 FIRSTROW = 2,
-FIELDTERMINATOR = ';' 
+FIELDTERMINATOR = ';',
+ROWTERMINATOR='\n' 
 )
 GO
 
@@ -127,9 +147,11 @@ BULK INSERT Product
 FROM 'D:\RemoteSQLPracticalTest\Data\Product.CSV'
 WITH 
 (
-FORMAT = 'CSV',
+-- FORMAT = 'CSV',
 FIRSTROW = 2,
-FIELDTERMINATOR = ';' 
+FIELDTERMINATOR = ';', 
+ROWTERMINATOR='\n',
+CODEPAGE = '1252'
 )
 GO
 --- Altering the Data Type of IsDiscontinued Coloum to bit from nvarchar
@@ -138,24 +160,17 @@ ALTER COLUMN IsDiscontinued bit not null
 GO
 
 
-
-
-
 /*==============================================================*/
-/* NORMALISING TABLES                                        */
+/* TASK 2. NORMALISING SCHEMA					                */
 /*==============================================================*/
 
 
 /*==============================================================*/
-/* Creating Normalised Country, City & Customer Tables          */
+/* Creating Country	Table					                        */
 /*==============================================================*/
-
-
-/*==============================================================*/
-/* Table: Country						                        */
-/*==============================================================*/
-
 --- Creating Temporary Table with Distinct Country Names 
+DROP TABLE IF EXISTS Temp_Country
+GO
 SELECT DISTINCT
 Country AS "CountryName" 
 INTO Temp_Country
@@ -163,6 +178,7 @@ FROM Customer
 GO
 
 --- Assigning Ids to Country Names
+GO
 SELECT 
 ROW_NUMBER() Over (Order By CountryName) AS Id,
 CountryName  
@@ -174,26 +190,29 @@ GO
 DROP TABLE Temp_Country
 GO
 
---- Assigning Primary Key Constrainst to Id
+--- Assigning Primary Key Constrainst to Country Ids 
 ALTER TABLE Country
 ALTER COLUMN Id int not null
+GO
 
 ALTER TABLE Country
 ADD PRIMARY KEY (Id)
 GO 
 
 /*==============================================================*/
-/* Table: City							                        */
+/* Creating City Table					                        */
 /*==============================================================*/
 
 --- Creating Temporary Table with Distinct City Names with Respective Countries
+DROP TABLE IF EXISTS Temp_City
+GO
 SELECT DISTINCT City,Country
 INTO Temp_City
 FROM
 Customer
 ORDER By City	
 
---- Assigning Ids to City Names and Country_Id from Country Table 
+--- Assigning Ids to City Names and Country_Ids from Country Table 
 SELECT 
 ROW_NUMBER() Over (Order By City) AS Id,
 City, 
@@ -203,10 +222,14 @@ FROM Temp_City tc
 INNER JOIN Country c
 ON c.CountryName=tc.Country
 
---- Assigning Primary Key Contraint to Ids  
+--- Dropping Temp Table
+DROP TABLE Temp_City
+GO
+
+--- Assigning Primary Key Contraint to City Ids  
 ALTER TABLE City
 ALTER COLUMN Id int not null
-
+GO
 ALTER TABLE City
 ADD PRIMARY KEY (Id)
 GO 
@@ -218,11 +241,12 @@ GO
 
 
 /*==============================================================*/
-/* Table: Customer						                        */
+/* Modifying Customer Table				                        */
 /*==============================================================*/
 
 --- Dropping City Names and Country and Assigning City_Id as Foreign Key  
-
+DROP TABLE IF EXISTS Temp_Customer
+GO 
 SELECT
 cust.Id, cust.FirstName, cust.LastName, cust.Phone, 
 c.Id AS City_Id
@@ -233,6 +257,7 @@ ON c.City=cust.City
 GO
 
 DROP TABLE Customer
+
 SELECT * INTO Customer FROM Temp_Customer
 DROP TABLE Temp_Customer
 
@@ -252,12 +277,12 @@ GO
 
 
 /*==============================================================*/
-/* Table: CustomerCard					                        */
+/* Assigning Keys and elationships to CustomerCard Table	    */
 /*==============================================================*/
 
---- Assigning Primary Key Contraint to Ids  
+--- Assigning Primary Key Contraint to CardNo   
 ALTER TABLE CustomerCard
-ALTER COLUMN CardNo int not null
+ALTER COLUMN CardNo bigint not null
 GO
 
 ALTER TABLE CustomerCard
@@ -269,9 +294,257 @@ ALTER TABLE CustomerCard
 ADD FOREIGN KEY (CustomerId) REFERENCES Customer(Id)
 GO
 
-
+/*==============================================================*/
+/* Assigning Keys and elationships to Orders Table	            */
 /*==============================================================*/
 
+--- Assigning Primary Key Contraint to Id   
+ALTER TABLE "Order"
+ALTER COLUMN Id int not null
+GO
+
+ALTER TABLE "Order"
+ADD PRIMARY KEY (Id)
+GO 
+
+--- Assigning Foreign Key Contraint to CardNo  
+ALTER TABLE "Order"
+ADD FOREIGN KEY (CardNo) REFERENCES CustomerCard(CardNo)
+GO
 
 
+/*==============================================================*/
+/* Assigning Keys and elationships to OrderItem Table	        */
+/*==============================================================*/
 
+--- Deleting Transactions in OrderItems Not There in Orders Table
+DROP TABLE IF EXISTS Temp_OrderItem
+GO
+SELECT * INTO Temp_OrderItem
+FROM OrderItem
+WHERE OrderId IN
+(SELECT id from "Order")
+GO
+
+DROP TABLE OrderItem
+GO
+
+SELECT * INTO OrderItem
+FROM Temp_OrderItem
+GO
+
+DROP TABLE Temp_OrderItem
+GO
+
+--- Assigning Primary Key Contraint to Id   
+ALTER TABLE OrderItem
+ALTER COLUMN Id int not null
+GO
+
+ALTER TABLE OrderItem
+ADD PRIMARY KEY (Id)
+GO 
+
+--- Assigning Foreign Key Contraint to Order Table  
+ALTER TABLE OrderItem
+ADD FOREIGN KEY (OrderId) REFERENCES "Order"(Id)
+GO
+
+--- NOTE WE STILL HAVE TO ASSIGN FOREIGN KEY PRODUCT ID WITH PRODUCT TABLE
+
+/*==============================================================*/
+/* Table: Supplier						                        */
+/*==============================================================*/
+
+--- Creating Temporary Table with Distinct Supplier_Id
+GO
+SELECT DISTINCT SupplierId AS Id
+INTO Supplier
+FROM
+Product
+ORDER By SupplierId	
+GO
+
+--- Assigning Primary Key Contraint to Supplier Ids  
+ALTER TABLE Supplier
+ALTER COLUMN Id int not null
+
+ALTER TABLE Supplier
+ADD PRIMARY KEY (Id)
+GO 
+
+/*==============================================================*/
+/* Table: SupplierProductCost			                        */
+/*==============================================================*/
+DROP TABLE IF EXISTS Temp_SupplierProductCost
+GO
+SELECT 
+SupplierId, id AS "ProductId", UnitPrice as "CostPrice"
+INTO Temp_SupplierProductCost
+FROM Product
+ORDER BY SupplierId
+GO
+--- Assigning Ids to Records 
+GO
+SELECT 
+ROW_NUMBER() Over (Order By SupplierId) AS Id,
+* INTO SupplierProductCost
+FROM Temp_SupplierProductCost
+ORDER BY SupplierId
+GO
+
+--- Drop Temp Table
+DROP TABLE Temp_SupplierProductCost
+
+--- Assigning Primary Key Contraint to Record Ids  
+ALTER TABLE SupplierProductCost
+ALTER COLUMN Id int not null
+GO
+ALTER TABLE SupplierProductCost
+ADD PRIMARY KEY (Id)
+GO 
+
+--- Assigning Foreign Key Contraint to SupplierId 
+ALTER TABLE SupplierProductCost
+ADD FOREIGN KEY (SupplierId) REFERENCES Supplier(Id)
+GO
+
+/*==============================================================*/
+/* Table: Package						                        */
+/*==============================================================*/
+--- Creating Temporary Table with Distinct Package Names
+DROP TABLE IF EXISTS Temp_Package
+GO 
+SELECT DISTINCT Package
+INTO Temp_Package
+FROM
+Product
+ORDER By Package	
+GO
+
+--- Assigning Ids to Package Types 
+GO 
+SELECT 
+ROW_NUMBER() Over (Order By Package) AS Id,
+Package 
+INTO Package
+FROM 
+Temp_Package
+ORDER BY Package
+GO 
+
+--- Dropping Temp Table
+DROP TABLE Temp_Package
+
+--- Assigning Primary Key Contraint to Package Ids  
+ALTER TABLE Package
+ALTER COLUMN Id int not null
+Go
+
+ALTER TABLE Package
+ADD PRIMARY KEY (Id)
+GO 
+
+
+/*==============================================================*/
+/* Table: IsDiscontinued						                        */
+/*==============================================================*/
+--- Creating Temporary Table with Distinct Values
+DROP TABLE IF EXISTS Temp_IsDiscontinued
+GO 
+SELECT DISTINCT IsDiscontinued
+INTO Temp_IsDiscontinued
+FROM
+Product
+ORDER By IsDiscontinued	
+GO
+
+--- Assigning Ids to Values 
+GO 
+SELECT 
+ROW_NUMBER() Over (Order By IsDiscontinued) AS Id,
+IsDiscontinued
+INTO IsDiscontinued
+FROM 
+Temp_IsDiscontinued
+ORDER BY IsDiscontinued
+GO 
+
+--- Dropping Temp Table
+DROP TABLE Temp_IsDiscontinued
+
+--- Assigning Primary Key Contraint to Ids  
+ALTER TABLE IsDiscontinued
+ALTER COLUMN Id int not null
+Go
+
+ALTER TABLE IsDiscontinued
+ADD PRIMARY KEY (Id)
+GO 
+
+
+/*==============================================================*/
+/* Table: Product						                        */
+/*==============================================================*/
+--- Creating Temp Table from Product with Modified Fields
+DROP TABLE IF EXISTS TEMP_Product 
+GO
+SELECT
+DISTINCT prod.id AS Id, prod.ProductName, 
+supprocost.Id AS SupplierCostId,
+pack.id AS PackageId, isdis.id AS IsDiscontinuedId
+INTO TEMP_Product
+FROM 
+Product prod
+LEFT JOIN SupplierProductCost supprocost
+ON supprocost.ProductId = prod.Id
+LEFT JOIN Package pack
+ON pack.Package = prod.Package
+LEFT JOIN 
+IsDiscontinued isdis
+ON isdis.IsDiscontinued = prod.IsDiscontinued
+GO
+
+--- Dropping Original Product Table
+DROP TABLE Product
+GO
+--- Assigning Values from Temp Product Table to New Product Table
+SELECT *
+INTO Product
+FROM TEMP_Product
+GO
+
+---Assigning Primary Key Constraint to ProductId
+ALTER TABLE Product
+ALTER COLUMN Id int not null
+GO
+ALTER TABLE Product
+ADD PRIMARY KEY (Id)
+GO
+
+--- Dropping Temp Table
+DROP TABLE TEMP_Product
+
+
+--------------- ASSIGNING FOREIGN KEY Constraint
+
+--- Assigning Foreign Key in OrderItem to Product Table
+ALTER TABLE OrderItem
+ADD FOREIGN KEY (ProductId) REFERENCES Product(Id)
+GO
+
+--- Assigning Foreign Key In Product Table To SupplierProductCost
+ALTER TABLE Product
+ADD FOREIGN KEY (SupplierCostId) REFERENCES SupplierProductCost(Id)
+GO
+
+--- Assigning Foreign Key In Product Table To IsDiscontinued
+
+ALTER TABLE Product
+ADD FOREIGN KEY (IsDiscontinuedId) REFERENCES IsDiscontinued(Id)
+GO
+
+--- Assigning Foreign Key In Product Table To Package 
+ALTER TABLE Product
+ADD FOREIGN KEY (PackageId) REFERENCES Package(Id)
+GO
