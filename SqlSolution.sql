@@ -49,7 +49,8 @@ WITH
 -- FORMAT = 'CSV',
 FIRSTROW = 2,
 FIELDTERMINATOR = ';',
-ROWTERMINATOR='\n'
+ROWTERMINATOR='\n',
+CODEPAGE = '1252' --- This is done for importing European / Special Characters properly into the table
 )
 GO
 
@@ -151,7 +152,7 @@ WITH
 FIRSTROW = 2,
 FIELDTERMINATOR = ';', 
 ROWTERMINATOR='\n',
-CODEPAGE = '1252'
+CODEPAGE = '1252' --- This is done for importing European / Special Characters properly into the table
 )
 GO
 --- Altering the Data Type of IsDiscontinued Coloum to bit from nvarchar
@@ -350,8 +351,6 @@ ALTER TABLE OrderItem
 ADD FOREIGN KEY (OrderId) REFERENCES "Order"(Id)
 GO
 
---- NOTE WE STILL HAVE TO ASSIGN FOREIGN KEY PRODUCT ID WITH PRODUCT TABLE
-
 /*==============================================================*/
 /* Table: Supplier						                        */
 /*==============================================================*/
@@ -526,7 +525,7 @@ GO
 DROP TABLE TEMP_Product
 
 
---------------- ASSIGNING FOREIGN KEY Constraint
+--------------- ASSIGNING FOREIGN KEY Constraints between Product and Related Tables 
 
 --- Assigning Foreign Key in OrderItem to Product Table
 ALTER TABLE OrderItem
@@ -551,8 +550,9 @@ GO
 
 
 /*==============================================================*/
-/* TASK 3. SELECT           					                */
+/* TASK 3. ANALYSIS		      					                */
 /*==============================================================*/
+
 
 /*==============================================================*/
 /* TASK 3.1 Total sales for 2013 for each Country               */
@@ -567,7 +567,7 @@ AND YEAR("Order".OrderDate) = 2013
 GROUP BY Country.CountryName
 GO
 
--- Verify per Country
+-- Verifying Output Taking Example of Argentina
 SELECT *
 FROM "Order", CustomerCard, Customer, City, Country
 WHERE "Order".CardNo = CustomerCard.CardNo
@@ -584,17 +584,26 @@ WHERE "Order".CardNo = 2067471061
 ORDER BY "Order".CardNo
 GO
 
+
+
+
 /*=========================================================================*/
 /* TASK 3.2 The single top selling product for each supplier for each year */
 /*=========================================================================*/
-SELECT * FROM
+
+
+--- Top Selling Product by Sales Amount
+SELECT Id AS SupplierId, OrderYear, ProductName AS TopSellingProduct, ProductSalesAmount
+FROM
 (
-SELECT
-ROW_NUMBER() OVER (PARTITION BY YEAR("Order".OrderDate)
+SELECT 
+-- Assigning Rank of Product Sales Amount by SupplierId and then by Year of Order
+ROW_NUMBER() OVER (PARTITION BY Supplier.id, YEAR("Order".OrderDate) 
 ORDER BY SUM(OrderItem.UnitPrice * OrderItem.Quantity) DESC) AS RankNo,
+Supplier.Id,
 YEAR("Order".OrderDate) AS OrderYear,
 OrderItem.ProductId AS ProductId,
-Product.ProductName,
+Product.ProductName, 
 SUM(OrderItem.UnitPrice * OrderItem.Quantity) as ProductSalesAmount
 FROM OrderItem
 INNER JOIN
@@ -603,13 +612,60 @@ ON "Order".Id = OrderItem.OrderId
 INNER JOIN
 Product
 ON Product.Id = OrderItem.ProductId
-GROUP BY
-YEAR("Order".OrderDate),
+INNER JOIN 
+SupplierProductCost
+ON SupplierProductCost.ProductId = Product.Id
+INNER JOIN
+Supplier
+ON Supplier.Id = SupplierProductCost.SupplierId
+GROUP BY 
+Supplier.Id,
+YEAR("Order".OrderDate), 
 OrderItem.ProductId,
 Product.ProductName
-) AS YearProductSales
+) AS YearProductSales 
 WHERE RankNo = 1
 GO
+
+--- Top Selling Product by Sales Quantity
+SELECT Id AS SupplierId, OrderYear, ProductName AS TopSellingProduct, ProductQuantity
+FROM
+(
+SELECT 
+-- Assigning Rank of Product Sales Amount by SupplierId and then by Year of Order
+ROW_NUMBER() OVER (PARTITION BY Supplier.id, YEAR("Order".OrderDate) 
+ORDER BY SUM(OrderItem.Quantity) DESC) AS RankNo,
+Supplier.Id,
+YEAR("Order".OrderDate) AS OrderYear,
+OrderItem.ProductId AS ProductId,
+Product.ProductName, 
+SUM(OrderItem.Quantity) as ProductQuantity
+FROM OrderItem
+INNER JOIN
+"Order"
+ON "Order".Id = OrderItem.OrderId
+INNER JOIN
+Product
+ON Product.Id = OrderItem.ProductId
+INNER JOIN 
+SupplierProductCost
+ON SupplierProductCost.ProductId = Product.Id
+INNER JOIN
+Supplier
+ON Supplier.Id = SupplierProductCost.SupplierId
+GROUP BY 
+Supplier.Id,
+YEAR("Order".OrderDate), 
+OrderItem.ProductId,
+Product.ProductName
+) AS YearProductSales 
+WHERE RankNo = 1
+GO
+
+
+
+
+
 
 
 /*=======================================================================================*/
